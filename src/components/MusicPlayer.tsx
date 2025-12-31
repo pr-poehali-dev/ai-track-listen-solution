@@ -12,7 +12,7 @@ interface Track {
   cover: string;
 }
 
-const tracks: Track[] = [
+const defaultTracks: Track[] = [
   {
     id: 1,
     title: "Цифровой рассвет",
@@ -38,7 +38,31 @@ const tracks: Track[] = [
 
 export default function MusicPlayer() {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [tracks, setTracks] = useState<Track[]>(defaultTracks);
   const currentTrack = tracks[currentTrackIndex];
+
+  useEffect(() => {
+    const fetchTracks = async () => {
+      try {
+        const response = await fetch('https://functions.poehali.dev/2879a4f9-1c5f-40e0-ae8e-20187d69e78d');
+        const data = await response.json();
+        if (data.tracks && data.tracks.length > 0) {
+          const uploadedTracks = data.tracks.map((track: any) => ({
+            id: track.id,
+            title: track.title,
+            artist: track.artist || 'Пачук Константин',
+            audioUrl: track.audioUrl,
+            cover: track.cover
+          }));
+          setTracks([...defaultTracks, ...uploadedTracks]);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки треков:', error);
+      }
+    };
+
+    fetchTracks();
+  }, []);
   
   const { 
     isPlaying, 

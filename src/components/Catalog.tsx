@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import TrackCard from './TrackCard';
 
-const tracks = [
+const defaultTracks = [
   { id: 1, title: "Цифровой рассвет", genre: "Ambient", duration: "3:45", plays: "12.5K", cover: "https://images.unsplash.com/photo-1619983081563-430f63602796?w=400&h=400&fit=crop" },
   { id: 2, title: "Электронные мечты", genre: "Electronic", duration: "4:12", plays: "8.3K", cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop" },
   { id: 3, title: "Синтетическая душа", genre: "Synthwave", duration: "5:20", plays: "15.2K", cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop" },
@@ -18,6 +18,27 @@ const genres = ["Все", "Ambient", "Electronic", "Synthwave", "Techno", "IDM",
 export default function Catalog() {
   const [selectedGenre, setSelectedGenre] = useState("Все");
   const [searchQuery, setSearchQuery] = useState("");
+  const [tracks, setTracks] = useState(defaultTracks);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchTracks = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('https://functions.poehali.dev/2879a4f9-1c5f-40e0-ae8e-20187d69e78d');
+        const data = await response.json();
+        if (data.tracks && data.tracks.length > 0) {
+          setTracks([...defaultTracks, ...data.tracks]);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки треков:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTracks();
+  }, []);
 
   const filteredTracks = tracks.filter(track => {
     const matchesGenre = selectedGenre === "Все" || track.genre === selectedGenre;

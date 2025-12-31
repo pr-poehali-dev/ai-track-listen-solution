@@ -45,9 +45,12 @@ export default function Header() {
           <Button variant="ghost" size="sm">
             Войти
           </Button>
-          <Button className="gradient-primary" size="sm">
-            Начать
-          </Button>
+          <a href="/admin">
+            <Button className="gradient-primary" size="sm">
+              <Icon name="Upload" size={16} className="mr-1" />
+              Админ
+            </Button>
+          </a>
         </div>
 
         <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
