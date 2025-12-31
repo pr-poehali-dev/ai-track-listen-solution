@@ -1,28 +1,85 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import Icon from '@/components/ui/icon';
+import { useAudio } from '@/hooks/useAudio';
 
 interface Track {
   id: number;
   title: string;
   artist: string;
-  duration: string;
+  audioUrl: string;
   cover: string;
 }
 
-export default function MusicPlayer() {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState([70]);
-  const [progress, setProgress] = useState([30]);
-
-  const currentTrack: Track = {
+const tracks: Track[] = [
+  {
     id: 1,
     title: "Цифровой рассвет",
     artist: "Пачук Константин",
-    duration: "3:45",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     cover: "https://images.unsplash.com/photo-1619983081563-430f63602796?w=300&h=300&fit=crop"
+  },
+  {
+    id: 2,
+    title: "Электронные мечты",
+    artist: "Пачук Константин",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    cover: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=300&h=300&fit=crop"
+  },
+  {
+    id: 3,
+    title: "Синтетическая душа",
+    artist: "Пачук Константин",
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    cover: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=300&fit=crop"
+  }
+];
+
+export default function MusicPlayer() {
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const currentTrack = tracks[currentTrackIndex];
+  
+  const { 
+    isPlaying, 
+    currentTime, 
+    duration, 
+    volume, 
+    togglePlay, 
+    setVolume, 
+    seek,
+    loadTrack 
+  } = useAudio(currentTrack.audioUrl);
+
+  useEffect(() => {
+    loadTrack(currentTrack.audioUrl);
+  }, [currentTrackIndex]);
+
+  const formatTime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  const handleProgressChange = (value: number[]) => {
+    const newTime = (value[0] / 100) * duration;
+    seek(newTime);
+  };
+
+  const handleVolumeChange = (value: number[]) => {
+    setVolume(value[0]);
+  };
+
+  const handlePrevTrack = () => {
+    setCurrentTrackIndex((prev) => (prev > 0 ? prev - 1 : tracks.length - 1));
+  };
+
+  const handleNextTrack = () => {
+    setCurrentTrackIndex((prev) => (prev < tracks.length - 1 ? prev + 1 : 0));
+  };
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <section id="player" className="py-20">
@@ -49,32 +106,42 @@ export default function MusicPlayer() {
 
                 <div className="mb-6">
                   <Slider 
-                    value={progress} 
-                    onValueChange={setProgress}
+                    value={[progressPercent]} 
+                    onValueChange={handleProgressChange}
                     max={100}
-                    step={1}
+                    step={0.1}
                     className="mb-2"
                   />
                   <div className="flex justify-between text-sm text-foreground/60">
-                    <span>1:15</span>
-                    <span>{currentTrack.duration}</span>
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(duration)}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-center gap-4 mb-6">
-                  <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="hover:scale-110 transition-transform"
+                    onClick={handlePrevTrack}
+                  >
                     <Icon name="SkipBack" size={24} />
                   </Button>
                   
                   <Button 
                     size="icon" 
                     className="w-16 h-16 rounded-full gradient-primary hover:scale-110 transition-transform"
-                    onClick={() => setIsPlaying(!isPlaying)}
+                    onClick={togglePlay}
                   >
                     <Icon name={isPlaying ? "Pause" : "Play"} size={28} />
                   </Button>
                   
-                  <Button variant="ghost" size="icon" className="hover:scale-110 transition-transform">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="hover:scale-110 transition-transform"
+                    onClick={handleNextTrack}
+                  >
                     <Icon name="SkipForward" size={24} />
                   </Button>
                 </div>
@@ -82,13 +149,13 @@ export default function MusicPlayer() {
                 <div className="flex items-center gap-4">
                   <Icon name="Volume2" size={20} className="text-foreground/60" />
                   <Slider 
-                    value={volume} 
-                    onValueChange={setVolume}
+                    value={[volume]} 
+                    onValueChange={handleVolumeChange}
                     max={100}
                     step={1}
                     className="flex-1"
                   />
-                  <span className="text-sm text-foreground/60 w-10">{volume[0]}%</span>
+                  <span className="text-sm text-foreground/60 w-10">{volume}%</span>
                 </div>
               </div>
             </div>
